@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shelf Life Prediction</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="text"] { margin-bottom: 15px; padding: 8px; width: 200px; }
+        input[type="submit"] { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        input[type="submit"]:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>Predict Shelf Life</h1>
+    <form action="/predict" method="post">
+        <label for="moisture">Moisture (%):</label>
+        <input type="text" id="moisture" name="moisture" required><br><br>
+
+        <label for="storage_temp">Storage Temp (°C):</label>
+        <input type="text" id="storage_temp" name="storage_temp" required><br><br>
+
+        <label for="rh">RH (%):</label>
+        <input type="text" id="rh" name="rh" required><br><br>
+
+        <label for="initial_ffa">Initial FFA (%):</label>
+        <input type="text" id="initial_ffa" name="initial_ffa" required><br><br>
+
+        <label for="initial_microbial_count">Initial Microbial Count (log CFU/g):</label>
+        <input type="text" id="initial_microbial_count" name="initial_microbial_count" required><br><br>
+
+        <input type="submit" value="Predict Shelf Life">
+    </form>
+</body>
+</html>
