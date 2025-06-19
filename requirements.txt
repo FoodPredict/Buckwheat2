@@ -2,3 +2,4 @@ flask==2.3.3
     tensorflow==2.15.0
     joblib==1.3.2
     numpy==1.26.4
+    echo "gunicorn" >> requirements.txt
