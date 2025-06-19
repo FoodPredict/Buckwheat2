@@ -6,28 +6,37 @@ import os # Import the os module
 
 app = Flask(__name__)
 
-# Define model and scaler paths
-MODEL_PATH = 'shelf_life_prediction_model.keras'
-SCALER_PATH = 'scaler.pkl'
+    # Define model and scaler paths
+    MODEL_PATH = 'shelf_life_prediction_model.keras'
+    SCALER_PATH = 'scaler.pkl'
 
-# Load the trained model and scaler globally
-# This assumes that the model and scaler files are in the same directory as app.py
-# If they are in a subdirectory, update MODEL_PATH and SCALER_PATH accordingly
-model = None
-scaler = None
+    # Load the trained model and scaler globally
+    model = None
+    scaler = None
 
-try:
-    # Check if files exist before attempting to load
-    if os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH):
-        model = tf.keras.models.load_model(MODEL_PATH)
-        scaler = joblib.load(SCALER_PATH)
-        print("Model and scaler loaded successfully.")
-    else:
-        print(f"Error loading model or scaler: File not found. Check paths: {MODEL_PATH}, {SCALER_PATH}")
+    print("Attempting to load model and scaler...") # Add this print statement
 
-except Exception as e:
-    print(f"Error loading model or scaler: An unexpected error occurred: {e}")
-    # model and scaler remain None
+    try:
+        # Check if files exist before attempting to load
+        model_exists = os.path.exists(MODEL_PATH)
+        scaler_exists = os.path.exists(SCALER_PATH)
+
+        print(f"Model file exists: {model_exists}") # Add this print statement
+        print(f"Scaler file exists: {scaler_exists}") # Add this print statement
+
+
+        if model_exists and scaler_exists:
+            model = tf.keras.models.load_model(MODEL_PATH)
+            scaler = joblib.load(SCALER_PATH)
+            print("Model and scaler loaded successfully.")
+        else:
+            print(f"Error loading model or scaler: File not found. Check paths: {MODEL_PATH}, {SCALER_PATH}")
+
+    except Exception as e:
+        print(f"Error loading model or scaler: An unexpected error occurred: {e}")
+        # model and scaler remain None
+
+    print("Model and scaler loading block finished.") # Add this print statement
 
 @app.route('/')
 def index():
