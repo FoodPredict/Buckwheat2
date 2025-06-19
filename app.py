@@ -1,19 +1,33 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import joblib
 import numpy as np
 import tensorflow as tf
+import os # Import the os module
 
 app = Flask(__name__)
 
-# Load the trained model and scaler
+# Define model and scaler paths
+MODEL_PATH = 'shelf_life_prediction_model.keras'
+SCALER_PATH = 'scaler.pkl'
+
+# Load the trained model and scaler globally
+# This assumes that the model and scaler files are in the same directory as app.py
+# If they are in a subdirectory, update MODEL_PATH and SCALER_PATH accordingly
+model = None
+scaler = None
+
 try:
-    model = tf.keras.models.load_model('shelf_life_prediction_model.keras')
-    scaler = joblib.load('scaler.pkl')
-    print("Model and scaler loaded successfully.")
+    # Check if files exist before attempting to load
+    if os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH):
+        model = tf.keras.models.load_model(MODEL_PATH)
+        scaler = joblib.load(SCALER_PATH)
+        print("Model and scaler loaded successfully.")
+    else:
+        print(f"Error loading model or scaler: File not found. Check paths: {MODEL_PATH}, {SCALER_PATH}")
+
 except Exception as e:
-    print(f"Error loading model or scaler: {e}")
-    model = None # Set to None if loading fails
-    scaler = None
+    print(f"Error loading model or scaler: An unexpected error occurred: {e}")
+    # model and scaler remain None
 
 @app.route('/')
 def index():
@@ -22,16 +36,17 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    # Check if model and scaler are loaded before processing the request
     if model is None or scaler is None:
-        return "Error: Model or scaler not loaded.", 500
+        return jsonify({"error": "Model or scaler not loaded. Please check server logs for details."}), 500
 
     try:
         # Get the input values from the form
-        moisture = float(request.form['moisture'])
-        storage_temp = float(request.form['storage_temp'])
-        rh = float(request.form['rh'])
-        initial_ffa = float(request.form['initial_ffa'])
-        initial_microbial_count = float(request.form['initial_microbial_count'])
+        moisture = float(request.form.get('moisture'))
+        storage_temp = float(request.form.get('storage_temp'))
+        rh = float(request.form.get('rh'))
+        initial_ffa = float(request.form.get('initial_ffa'))
+        initial_microbial_count = float(request.form.get('initial_microbial_count'))
 
         # Prepare the input data for scaling and prediction
         # Ensure the order matches the training data features
@@ -42,17 +57,24 @@ def predict():
 
         # Make the prediction
         prediction = model.predict(scaled_input_data)
-        predicted_shelf_life = prediction[0][0] # Extract the scalar value
+        predicted_shelf_life = float(prediction[0][0]) # Extract the scalar value and cast to float
 
-        # Render the results page with the prediction
-        return render_template('results.html', prediction=predicted_shelf_life)
+        # You can choose to render a results page or return JSON
+        # For an API endpoint, returning JSON is typical:
+        return jsonify({"predicted_shelf_life": predicted_shelf_life})
 
-    except ValueError:
-        return "Invalid input. Please enter numeric values.", 400
+        # If you want to render a results page, uncomment the following lines:
+        # return render_template('results.html', prediction=predicted_shelf_life)
+
+
+    except (ValueError, TypeError):
+        # Catch both ValueError (for float conversion) and TypeError (if .get() returns None)
+        return jsonify({"error": "Invalid input. Please ensure all fields are filled with numeric values."}), 400
     except Exception as e:
-        return f"An error occurred during prediction: {e}", 500
+        # Catch any other unexpected errors during the prediction process
+        return jsonify({"error": f"An error occurred during prediction: {e}"}), 500
 
 if __name__ == '__main__':
-    # Run the Flask app
-    # In a production environment, you would use a production-ready server
-    app.run(debug=True) # debug=True is useful for development
+    # This is used for running the app locally for testing.
+    # In a production environment (like Render), a WSGI server like Gunicorn is used.
+    app.run(debug=True)
