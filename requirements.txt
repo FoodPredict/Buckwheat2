@@ -1,7 +1,6 @@
-flask==2.3.3
-    tensorflow==2.18.0
-    joblib==1.3.2
-    pandas
-    numpy==1.26.4
-    gunicorn
-    scikit-learn
+# requirements.txt
+scikit-learn
+joblib
+pandas
+Flask
+numpy
