@@ -4,31 +4,81 @@
     <title>Shelf Life Prediction</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        label { display: block; margin-bottom: 5px; }
-        input[type="text"] { margin-bottom: 15px; padding: 8px; width: 200px; }
-        input[type="submit"] { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-        input[type="submit"]:hover { background-color: #45a049; }
+        label { display: inline-block; width: 200px; margin-bottom: 10px; }
+        input { margin-bottom: 10px; }
+        button { margin-top: 10px; }
+        #predictionResult { margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>Predict Shelf Life</h1>
-    <form action="/predict" method="post">
-        <label for="moisture">Moisture (%):</label>
-        <input type="text" id="moisture" name="moisture" required><br><br>
-
-        <label for="storage_temp">Storage Temp (°C):</label>
-        <input type="text" id="storage_temp" name="storage_temp" required><br><br>
-
-        <label for="rh">RH (%):</label>
-        <input type="text" id="rh" name="rh" required><br><br>
-
-        <label for="initial_ffa">Initial FFA (%):</label>
-        <input type="text" id="initial_ffa" name="initial_ffa" required><br><br>
-
-        <label for="initial_microbial_count">Initial Microbial Count (log CFU/g):</label>
-        <input type="text" id="initial_microbial_count" name="initial_microbial_count" required><br><br>
-
-        <input type="submit" value="Predict Shelf Life">
+    <h2>Predict Product Shelf Life</h2>
+    <form id="predictionForm">
+        <div>
+            <label for="moisture">Moisture (%):</label>
+            <input type="number" step="0.01" id="moisture" name="moisture" required><br>
+        </div>
+        <div>
+            <label for="temp">Storage Temp (°C):</label>
+            <input type="number" step="0.1" id="temp" name="temp" required><br>
+        </div>
+        <div>
+            <label for="rh">RH (%):</label>
+            <input type="number" step="0.1" id="rh" name="rh" required><br>
+        </div>
+        <div>
+            <label for="ffa">Initial FFA (%):</label>
+            <input type="number" step="0.01" id="ffa" name="ffa" required><br>
+        </div>
+        <div>
+            <label for="microbial">Initial Microbial Count (log CFU/g):</label>
+            <input type="number" step="0.1" id="microbial" name="microbial" required><br>
+        </div>
+        <button type="submit">Predict Shelf Life</button>
     </form>
+
+    <div id="predictionResult"></div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const form = event.target;
+            const formData = new FormData(form);
+
+            // Convert form data to a plain object
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value; // Use key names that match your form input names (moisture, temp, etc.)
+            });
+
+            try {
+                // Send data to the /predict endpoint
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    // Note: Sending as application/x-www-form-urlencoded from JS for request.form on Flask
+                    // headers: {
+                    //    'Content-Type': 'application/json' // Use this header if sending JSON and change Flask to request.get_json()
+                    // },
+                    // body: JSON.stringify(data) // Use this body if sending JSON
+                     body: new URLSearchParams(formData) // Use this body for form data
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status}, Message: ${error.error}`);
+                }
+
+                const result = await response.json();
+                const predictionDiv = document.getElementById('predictionResult');
+                predictionDiv.innerHTML = `Predicted Shelf Life: ${result.predicted_shelf_life_days.toFixed(4)} days`;
+
+            } catch (error) {
+                console.error('Prediction failed:', error);
+                const predictionDiv = document.getElementById('predictionResult');
+                predictionDiv.innerHTML = `Error predicting: ${error.message}`;
+                predictionDiv.style.color = 'red';
+            }
+        });
+    </script>
 </body>
 </html>
