@@ -1,5 +1,5 @@
 # requirements.txt
-scikit-learn
+scikit-learn==1.6.1
 joblib
 pandas
 Flask
